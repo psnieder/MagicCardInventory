@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MagicCardInventory": {
+      "commandName": "Project",
+      "commandLineArgs": "updateprices"
+    }
+  }
+}
