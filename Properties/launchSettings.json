@@ -2,7 +2,7 @@
   "profiles": {
     "MagicCardInventory": {
       "commandName": "Project",
-      "commandLineArgs": "updateprices"
+      "commandLineArgs": "add\r\n\"Daybreak Ranger\"\r\nisd\r\nyes"
     }
   }
 }

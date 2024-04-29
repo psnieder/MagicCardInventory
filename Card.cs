@@ -141,6 +141,51 @@ namespace MagicCardInventory
         public string? Edhrec { get; set; }
     }
 
+    public class CardFace
+    {
+        [JsonPropertyName("object")]
+        public string? Object { get; set; }
+
+        [JsonPropertyName("name")]
+        public string? Name { get; set; }
+
+        [JsonPropertyName("mana_cost")]
+        public string? ManaCost { get; set; }
+
+        [JsonPropertyName("type_line")]
+        public string? TypeLine { get; set; }
+
+        [JsonPropertyName("oracle_text")]
+        public string? OracleText { get; set; }
+
+        [JsonPropertyName("colors")]
+        public List<string>? Colors { get; set; }
+
+        [JsonPropertyName("power")]
+        public string? Power { get; set; }
+
+        [JsonPropertyName("toughness")]
+        public string? Toughness { get; set; }
+
+        [JsonPropertyName("watermark")]
+        public string? Watermark { get; set; }
+
+        [JsonPropertyName("artist")]
+        public string? Artist { get; set; }
+
+        [JsonPropertyName("artist_id")]
+        public string? ArtistId { get; set; }
+
+        [JsonPropertyName("illustration_id")]
+        public string? IllustrationId { get; set; }
+
+        [JsonPropertyName("flavor_name")]
+        public string? FlavorName { get; set; }
+
+        [JsonPropertyName("color_indicator")]
+        public List<string>? ColorIndicator { get; set; }
+    }
+
     public class Card
     {
         [JsonPropertyName("object")]
@@ -207,10 +252,10 @@ namespace MagicCardInventory
         public string? OracleText { get; set; }
 
         [JsonPropertyName("colors")]
-        public List<object>? Colors { get; set; }
+        public List<string>? Colors { get; set; }
 
         [JsonPropertyName("color_identity")]
-        public List<object>? ColorIdentity { get; set; }
+        public List<string>? ColorIdentity { get; set; }
 
         [JsonPropertyName("keywords")]
         public List<object>? Keywords { get; set; }
@@ -325,6 +370,9 @@ namespace MagicCardInventory
 
         [JsonPropertyName("purchase_uris")]
         public PurchaseUris? PurchaseUris { get; set; }
+
+        [JsonPropertyName("card_faces")]
+        public List<CardFace>? CardFaces { get; set; }
     }
 
 }

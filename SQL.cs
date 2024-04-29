@@ -147,14 +147,15 @@ namespace MagicCardInventory
         #endregion
 
         #region Inserts
-        internal int InsertCardInfo(int p_cardId, string p_scryfallId, string p_cardName, string p_set, string p_rarity, bool p_foil)
+        internal int InsertCardInfo(int p_cardId, string p_scryfallId, string p_cardName, string p_set, string p_type, string p_rarity, bool p_foil)
         {
-            string sql = "INSERT INTO tblCardInfo VALUES (@p_cardId, @p_scryfallId, @p_cardName, @p_set, @p_rarity, @p_foil)";
+            string sql = "INSERT INTO tblCardInfo VALUES (@p_cardId, @p_scryfallId, @p_cardName, @p_set, @p_type, @p_rarity, @p_foil)";
             SqlCommand command = new(sql, Con, Transaction);
             command.Parameters.AddWithValue("@p_cardId", p_cardId);
             command.Parameters.AddWithValue("@p_scryfallId", p_scryfallId);
             command.Parameters.AddWithValue("@p_cardName", p_cardName);
             command.Parameters.AddWithValue("@p_set", p_set);
+            command.Parameters.AddWithValue("@p_type", p_type);
             command.Parameters.AddWithValue("@p_rarity", p_rarity);
             command.Parameters.AddWithValue("@p_foil", p_foil);
             return command.ExecuteNonQuery();
@@ -175,6 +176,35 @@ namespace MagicCardInventory
             command.Parameters.AddWithValue("@p_cardId", p_cardId);
             command.Parameters.AddWithValue("@p_price", p_price);
             command.Parameters.AddWithValue("@p_updated_date", DateTime.Now);
+            return command.ExecuteNonQuery();
+        }
+
+        internal int InsertCardColors(int p_cardId, short p_sequence, bool p_blue, bool p_black, bool p_red, bool p_green, bool p_white)
+        {
+            string sql = "INSERT INTO tblCardColors VALUES (@p_cardId, @p_sequence, @p_blue, @p_black, @p_red, @p_green, @p_white)";
+            SqlCommand command = new(sql, Con, Transaction);
+            command.Parameters.AddWithValue("@p_cardId", p_cardId);
+            command.Parameters.AddWithValue("@p_sequence", p_sequence);
+            command.Parameters.AddWithValue("@p_blue", p_blue);
+            command.Parameters.AddWithValue("@p_black", p_black);
+            command.Parameters.AddWithValue("@p_red", p_red);
+            command.Parameters.AddWithValue("@p_green", p_green);
+            command.Parameters.AddWithValue("@p_white", p_white);
+            return command.ExecuteNonQuery();
+        }
+
+        internal int InsertCardManaCost(int p_cardId, short p_sequence, short p_uncolored, short p_blue, short p_black, short p_red, short p_green, short p_white)
+        {
+            string sql = "INSERT INTO tblCardManaCost VALUES (@p_cardId, @p_sequence, @p_uncolored, @p_blue, @p_black, @p_red, @p_green, @p_white)";
+            SqlCommand command = new(sql, Con, Transaction);
+            command.Parameters.AddWithValue("@p_cardId", p_cardId);
+            command.Parameters.AddWithValue("@p_sequence", p_sequence);
+            command.Parameters.AddWithValue("@p_uncolored", p_uncolored);
+            command.Parameters.AddWithValue("@p_blue", p_blue);
+            command.Parameters.AddWithValue("@p_black", p_black);
+            command.Parameters.AddWithValue("@p_red", p_red);
+            command.Parameters.AddWithValue("@p_green", p_green);
+            command.Parameters.AddWithValue("@p_white", p_white);
             return command.ExecuteNonQuery();
         }
         #endregion
