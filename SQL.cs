@@ -52,6 +52,7 @@ namespace MagicCardInventory
             }
 
             Con.Close();
+            Console.WriteLine("SQL transaction committed.");
             return true;
         }
 
@@ -79,16 +80,17 @@ namespace MagicCardInventory
 
             Rollback = false;
             Con.Close();
+            Console.WriteLine("SQL transaction rolled back.");
         }
         #endregion
 
         #region Selects
         internal DataTable GetAllCards()
         {
-            string sql = "SELECT c.card_id_int, c.scryfall_id_str, c.foil_bool FROM tblCardInfo c";
-            SqlCommand command = new(sql, Con, Transaction);
+            string sql = "SELECT c.card_id_int, c.scryfall_id_str, c.card_name_str, c.set_str, c.foil_bool FROM tblCardInfo c";
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
             SqlDataReader reader = command.ExecuteReader();
-            DataTable results = new();
+            DataTable results = new DataTable();
             results.Load(reader);
             return results;
         }
@@ -96,7 +98,7 @@ namespace MagicCardInventory
         {
             /* Build SQL query */
             string sql = "SELECT c.card_id_int FROM tblCardInfo c WHERE c.card_name_str = @p_cardName AND c.set_str = @p_set AND c.foil_bool = @p_foil";
-            SqlCommand command = new(sql, Con, Transaction);
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
             command.Parameters.AddWithValue("@p_cardName", p_cardName);
             command.Parameters.AddWithValue("@p_set", p_set);
             command.Parameters.AddWithValue("@p_foil", p_foil);
@@ -105,7 +107,7 @@ namespace MagicCardInventory
             SqlDataReader reader = command.ExecuteReader();
 
             /* Store query results in a data table */
-            DataTable results = new();
+            DataTable results = new DataTable();
             results.Load(reader);
 
             if (results.Rows.Count == 0) return 0;
@@ -124,14 +126,14 @@ namespace MagicCardInventory
         {
             /* Build SQL query */
             string sql = "SELECT k.next_key_int FROM tblNextKeys k WHERE k.next_key_type_str = @p_nextKeyType";
-            SqlCommand command = new(sql, Con, Transaction);
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
             command.Parameters.AddWithValue("@p_nextKeyType", p_nextKeyType);
 
             /* Execute query */
             SqlDataReader reader = command.ExecuteReader();
 
             /* Store query results in a data table */
-            DataTable results = new();
+            DataTable results = new DataTable();
             results.Load(reader);
 
             /* Return next key */
@@ -150,7 +152,7 @@ namespace MagicCardInventory
         internal int InsertCardInfo(int p_cardId, string p_scryfallId, string p_cardName, string p_set, string p_type, string p_rarity, bool p_foil)
         {
             string sql = "INSERT INTO tblCardInfo VALUES (@p_cardId, @p_scryfallId, @p_cardName, @p_set, @p_type, @p_rarity, @p_foil)";
-            SqlCommand command = new(sql, Con, Transaction);
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
             command.Parameters.AddWithValue("@p_cardId", p_cardId);
             command.Parameters.AddWithValue("@p_scryfallId", p_scryfallId);
             command.Parameters.AddWithValue("@p_cardName", p_cardName);
@@ -164,7 +166,7 @@ namespace MagicCardInventory
         internal int InsertCardCount(int p_cardId)
         {
             string sql = "INSERT INTO tblCardCount VALUES (@p_cardId, 1)";
-            SqlCommand command = new(sql, Con, Transaction);
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
             command.Parameters.AddWithValue("@p_cardId", p_cardId);
             return command.ExecuteNonQuery();
         }
@@ -172,7 +174,7 @@ namespace MagicCardInventory
         internal int InsertCardPrice(int p_cardId, decimal p_price)
         {
             string sql = "INSERT INTO tblCardPrice VALUES (@p_cardId, @p_price, @p_updated_date)";
-            SqlCommand command = new(sql, Con, Transaction);
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
             command.Parameters.AddWithValue("@p_cardId", p_cardId);
             command.Parameters.AddWithValue("@p_price", p_price);
             command.Parameters.AddWithValue("@p_updated_date", DateTime.Now);
@@ -182,7 +184,7 @@ namespace MagicCardInventory
         internal int InsertCardColors(int p_cardId, short p_sequence, bool p_blue, bool p_black, bool p_red, bool p_green, bool p_white)
         {
             string sql = "INSERT INTO tblCardColors VALUES (@p_cardId, @p_sequence, @p_blue, @p_black, @p_red, @p_green, @p_white)";
-            SqlCommand command = new(sql, Con, Transaction);
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
             command.Parameters.AddWithValue("@p_cardId", p_cardId);
             command.Parameters.AddWithValue("@p_sequence", p_sequence);
             command.Parameters.AddWithValue("@p_blue", p_blue);
@@ -193,10 +195,10 @@ namespace MagicCardInventory
             return command.ExecuteNonQuery();
         }
 
-        internal int InsertCardManaCost(int p_cardId, short p_sequence, short p_uncolored, short p_blue, short p_black, short p_red, short p_green, short p_white)
+        internal int InsertCardManaCost(int p_cardId, short p_sequence, short p_uncolored, short p_blue, short p_black, short p_red, short p_green, short p_white, bool p_hybrid)
         {
-            string sql = "INSERT INTO tblCardManaCost VALUES (@p_cardId, @p_sequence, @p_uncolored, @p_blue, @p_black, @p_red, @p_green, @p_white)";
-            SqlCommand command = new(sql, Con, Transaction);
+            string sql = "INSERT INTO tblCardManaCost VALUES (@p_cardId, @p_sequence, @p_uncolored, @p_blue, @p_black, @p_red, @p_green, @p_white, @p_hybrid)";
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
             command.Parameters.AddWithValue("@p_cardId", p_cardId);
             command.Parameters.AddWithValue("@p_sequence", p_sequence);
             command.Parameters.AddWithValue("@p_uncolored", p_uncolored);
@@ -205,6 +207,7 @@ namespace MagicCardInventory
             command.Parameters.AddWithValue("@p_red", p_red);
             command.Parameters.AddWithValue("@p_green", p_green);
             command.Parameters.AddWithValue("@p_white", p_white);
+            command.Parameters.AddWithValue("@p_hybrid", p_hybrid);
             return command.ExecuteNonQuery();
         }
         #endregion
@@ -213,7 +216,7 @@ namespace MagicCardInventory
         internal int UpdateCardCount(int p_cardId)
         {
             string sql = "UPDATE tblCardCount SET count_short = count_short + 1 WHERE card_id_int = @p_cardId";
-            SqlCommand command = new(sql, Con, Transaction);
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
             command.Parameters.AddWithValue("@p_cardId", p_cardId);
             return command.ExecuteNonQuery();
         }
@@ -221,7 +224,7 @@ namespace MagicCardInventory
         internal int UpdateCardPrice(int p_cardId, decimal p_price)
         {
             string sql = "UPDATE tblCardPrice SET price_dec = @p_price, updated_date = @p_updated_date WHERE card_id_int = @p_cardId";
-            SqlCommand command = new(sql, Con, Transaction);
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
             command.Parameters.AddWithValue("@p_cardId", p_cardId);
             command.Parameters.AddWithValue("@p_price", p_price);
             command.Parameters.AddWithValue("@p_updated_date", DateTime.Now);
@@ -231,7 +234,7 @@ namespace MagicCardInventory
         internal int UpdateNextKey(string p_nextKeyType)
         {
             string sql = "UPDATE tblNextKeys SET next_key_int = next_key_int + 1 WHERE next_key_type_str = @p_nextKeyType";
-            SqlCommand command = new(sql, Con, Transaction);
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
             command.Parameters.AddWithValue("@p_nextKeyType", p_nextKeyType);
             return command.ExecuteNonQuery();
         }

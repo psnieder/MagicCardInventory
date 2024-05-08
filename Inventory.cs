@@ -7,9 +7,10 @@ namespace MagicCardInventory
     public class Inventory
     {
         #region Member Variables
-        private static readonly SQL sql = new("Server=localhost;Database=Inventory;Trusted_Connection=True;");
-        private static readonly HttpClient client = new();
+        private static readonly SQL sql = new SQL("Server=localhost;Database=Inventory;Trusted_Connection=True;");
+        private static readonly HttpClient client = new HttpClient();
         private static readonly string multiLayouts = "split,flip,transform,modal_dfc,reversible_card";
+        private static string print_foil_str = string.Empty;
         #endregion
 
         #region Main
@@ -73,7 +74,9 @@ namespace MagicCardInventory
             short greenMana = 0;
             short whiteMana = 0;
             short sequence = 0;
+            bool hybrid = false;
             bool foil = p_foil_str.ToLower() == "yes";
+            if (foil) print_foil_str = " - FOIL";
             p_name = p_name.Replace(" ", "+");
 
             /* Get card data from API call */
@@ -146,6 +149,7 @@ namespace MagicCardInventory
                 redMana = (short)card.ManaCost.Count(f => f == 'R');
                 greenMana = (short)card.ManaCost.Count(f => f == 'G');
                 whiteMana = (short)card.ManaCost.Count(f => f == 'W');
+                if (card.ManaCost.Contains('/')) hybrid = true;
             }
 
             /* Check if we already have this card inventoried and just need to increase count (and update price because why not) */
@@ -156,6 +160,9 @@ namespace MagicCardInventory
 
                 //Update price for card
                 if (sql.UpdateCardPrice(cardId, price) != 1) throw new Exception("Error updating card price");
+
+                //Print card that we updates
+                Console.WriteLine("Card count and price updated: " + cardName + " - " + setName + print_foil_str + " - " + price);
             }
             else
             {
@@ -188,6 +195,7 @@ namespace MagicCardInventory
                         short redMana_cf = redMana;
                         short greenMana_cf = greenMana;
                         short whiteMana_cf = whiteMana;
+                        bool hybrid_cf = hybrid;
 
                         //Get the colors from the card face object
                         if (cf.Colors is not null && cf.Colors.Count > 0)
@@ -209,11 +217,12 @@ namespace MagicCardInventory
                             redMana_cf = (short)cf.ManaCost.Count(f => f == 'R');
                             greenMana_cf = (short)cf.ManaCost.Count(f => f == 'G');
                             whiteMana_cf = (short)cf.ManaCost.Count(f => f == 'W');
+                            if (cf.ManaCost.Contains('/')) hybrid_cf = true;
                         }
 
                         //Insert into tblCardColors and tblCardManaCost
                         if (sql.InsertCardColors(cardId, sequence, blueColor_cf, blackColor_cf, redColor_cf, greenColor_cf, whiteColor_cf) != 1) throw new Exception("Error inserting new card into tblCardColors");
-                        if (sql.InsertCardManaCost(cardId, sequence, uncoloredMana_cf, blueMana_cf, blackMana_cf, redMana_cf, greenMana_cf, whiteMana_cf) != 1) throw new Exception("Error inserting new card into tblCardManaCost");
+                        if (sql.InsertCardManaCost(cardId, sequence, uncoloredMana_cf, blueMana_cf, blackMana_cf, redMana_cf, greenMana_cf, whiteMana_cf, hybrid_cf) != 1) throw new Exception("Error inserting new card into tblCardManaCost");
 
                         sequence++;
                     }
@@ -222,8 +231,11 @@ namespace MagicCardInventory
                 {
                     //Insert non-multi layout into tblCardColors and tblCardManaCost
                     if (sql.InsertCardColors(cardId, sequence, blueColor, blackColor, redColor, greenColor, whiteColor) != 1) throw new Exception("Error inserting new card into tblCardColors");
-                    if (sql.InsertCardManaCost(cardId, sequence, uncoloredMana, blueMana, blackMana, redMana, greenMana, whiteMana) != 1) throw new Exception("Error inserting new card into tblCardManaCost");
+                    if (sql.InsertCardManaCost(cardId, sequence, uncoloredMana, blueMana, blackMana, redMana, greenMana, whiteMana, hybrid) != 1) throw new Exception("Error inserting new card into tblCardManaCost");
                 }
+
+                //Print card that we added
+                Console.WriteLine("New card added: " + cardName + " - " + setName + print_foil_str + " - " + price);
             }
         }
 
@@ -256,13 +268,21 @@ namespace MagicCardInventory
 
                 /* Get the price from the card data */
                 string? price_str = card.Prices?.Usd;
-                if (row.Field<bool>("foil_bool")) price_str = card.Prices?.UsdFoil;
+                if (row.Field<bool>("foil_bool"))
+                {
+                    price_str = card.Prices?.UsdFoil;
+                    print_foil_str = " - FOIL";
+                }
 
                 if (!string.IsNullOrWhiteSpace(price_str)) price = Convert.ToDecimal(price_str);
                 else throw new Exception("No price information returned");
 
                 /* Update price for the card */
                 if (sql.UpdateCardPrice(row.Field<int>("card_id_int"), price) != 1) throw new Exception("Error updating card price");
+
+                /* Print what card we just updated */
+                Console.WriteLine("Price updated: " + row.Field<string>("card_name_str") + " - " + row.Field<string>("set_str") + print_foil_str + " - " + price);
+                print_foil_str = string.Empty;
 
                 //Wait 100 milliseconds per API rate limit
                 await Task.Delay(100);
