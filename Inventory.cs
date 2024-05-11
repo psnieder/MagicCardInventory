@@ -20,7 +20,7 @@ namespace MagicCardInventory
         /// <param name="args">Command line arguments</param>
         public static async Task Main(string[] args)
         {
-            short count = 0;
+            short count = 1;
             if (args.Length > 4 && !string.IsNullOrWhiteSpace(args[4]) && !short.TryParse(args[4], out count)) 
             {
                 Console.WriteLine("Invalid value for count.");
@@ -163,20 +163,20 @@ namespace MagicCardInventory
             if (CheckExists(cardName, setName, foil, out int cardId))
             {
                 //Update count on existing entry in database
-                if (sql.UpdateCardCount(cardId) != 1) throw new Exception("Error updating card count");
+                if (sql.UpdateCardCount(cardId, p_count) != 1) throw new Exception("Error updating card count");
 
                 //Update price for card
                 if (sql.UpdateCardPrice(cardId, price) != 1) throw new Exception("Error updating card price");
 
                 //Print card that we updates
-                Console.WriteLine("Card count and price updated: " + cardName + " - " + setName + print_foil_str + " - " + price);
+                Console.WriteLine("Card count and price updated: " + cardName + " - " + setName + print_foil_str + " - " + price + ", count: " + p_count);
             }
             else
             {
                 //Add new card
                 if (sql.InsertCardInfo(cardId, scryfallId, cardName, setName, type, rarity, foil) != 1) throw new Exception("Error inserting new card into tblCardInfo");
                 if (sql.InsertCardPrice(cardId, price) != 1) throw new Exception("Error inserting new card into tblCardPrice");
-                if (sql.InsertCardCount(cardId) != 1) throw new Exception("Error inserting new card into tblCardCount");
+                if (sql.InsertCardCount(cardId, p_count) != 1) throw new Exception("Error inserting new card into tblCardCount");
 
                 /* If there are multiple card faces, get information from the card faces object and insert rows for colors and mana cost for each of them */
                 //Eligible layouts are the following:
@@ -242,18 +242,7 @@ namespace MagicCardInventory
                 }
 
                 //Print card that we added
-                Console.WriteLine("New card added: " + cardName + " - " + setName + print_foil_str + " - " + price);
-            }
-
-            /* Check if we bulk adding */
-            if (p_count > 1)
-            {
-                //We would have already added one card, so add the remainder
-                p_count--;
-                if (sql.UpdateCardCountBulk(cardId, p_count) != 1) throw new Exception("Error updating card count (bulk) for card id: " + cardId);
-
-                //Print how many more cards we added
-                Console.WriteLine(p_count + " more cards added to inventory.");
+                Console.WriteLine("New card added: " + cardName + " - " + setName + print_foil_str + " - " + price + ", count: " + p_count);
             }
         }
 
