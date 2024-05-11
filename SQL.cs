@@ -213,6 +213,14 @@ namespace MagicCardInventory
         #endregion
 
         #region Updates
+        internal int UpdateCardCountBulk(int p_cardId, short p_count)
+        {
+            string sql = "UPDATE tblCardCount SET count_short = count_short + @p_count WHERE card_id_int = @p_cardId";
+            SqlCommand command = new SqlCommand(sql, Con, Transaction);
+            command.Parameters.AddWithValue("@p_cardId", p_cardId);
+            command.Parameters.AddWithValue("@p_count", p_count);
+            return command.ExecuteNonQuery();
+        }
         internal int UpdateCardCount(int p_cardId)
         {
             string sql = "UPDATE tblCardCount SET count_short = count_short + 1 WHERE card_id_int = @p_cardId";

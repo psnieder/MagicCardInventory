@@ -20,6 +20,13 @@ namespace MagicCardInventory
         /// <param name="args">Command line arguments</param>
         public static async Task Main(string[] args)
         {
+            short count = 0;
+            if (args.Length > 4 && !string.IsNullOrWhiteSpace(args[4]) && !short.TryParse(args[4], out count)) 
+            {
+                Console.WriteLine("Invalid value for count.");
+                return;
+            }
+
             //Begin a new SQL transaction
             sql.BeginTransaction();
 
@@ -27,7 +34,7 @@ namespace MagicCardInventory
             switch(args[0].ToLower())
             {
                 case "add":
-                    await InventoryCard(args[1], args[2], args[3]);
+                    await InventoryCard(args[1], args[2], args[3], count);
                     break;
                 case "updateprices":
                     await UpdatePrices();               
@@ -52,7 +59,7 @@ namespace MagicCardInventory
         /// <param name="p_foil_str">True if the card is a foil</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private static async Task InventoryCard(string p_name, string p_set, string p_foil_str)
+        private static async Task InventoryCard(string p_name, string p_set, string p_foil_str, short p_count)
         {
 
             /* Declare variables needed for card inventory */
@@ -236,6 +243,17 @@ namespace MagicCardInventory
 
                 //Print card that we added
                 Console.WriteLine("New card added: " + cardName + " - " + setName + print_foil_str + " - " + price);
+            }
+
+            /* Check if we bulk adding */
+            if (p_count > 1)
+            {
+                //We would have already added one card, so add the remainder
+                p_count--;
+                if (sql.UpdateCardCountBulk(cardId, p_count) != 1) throw new Exception("Error updating card count (bulk) for card id: " + cardId);
+
+                //Print how many more cards we added
+                Console.WriteLine(p_count + " more cards added to inventory.");
             }
         }
 
