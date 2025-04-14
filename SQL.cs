@@ -1,10 +1,10 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
-using SQL;
+using BaseClasses;
 
 namespace MagicCardInventory
 {
-    internal class SQL : Base
+    internal class SQL : SqlBase
     {
         #region Constructors
         internal SQL() { }

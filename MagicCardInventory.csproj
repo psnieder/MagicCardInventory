@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <Reference Include="SqlBase">
-      <HintPath>..\Base\SqlBase\bin\Debug\SqlBase.dll</HintPath>
+      <HintPath>..\BaseClasses\bin\Debug\SqlBase.dll</HintPath>
     </Reference>
   </ItemGroup>
 
