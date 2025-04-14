@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text.Json;
+using System.Net;
 
 namespace MagicCardInventory
 {
@@ -26,6 +27,10 @@ namespace MagicCardInventory
                 Console.WriteLine("Invalid value for count.");
                 return;
             }
+
+            client.BaseAddress = new Uri("https://api.scryfall.com/cards/");
+            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "MagicCardInventory") ;
+            client.DefaultRequestHeaders.Add("Accept", "*/*");
 
             //Begin a new SQL transaction
             sql.BeginTransaction();
@@ -87,7 +92,7 @@ namespace MagicCardInventory
             p_name = p_name.Replace(" ", "+");
 
             /* Get card data from API call */
-            string responseJson = await client.GetStringAsync("https://api.scryfall.com/cards/named?exact=" + p_name + "&set=" + p_set);
+            string responseJson = await client.GetStringAsync(client.BaseAddress + "named?exact=" + p_name + "&set=" + p_set);
             if (string.IsNullOrWhiteSpace(responseJson))
             {
                 throw new Exception("Unable to get card data from API call for card: " + p_name + " , set: " + p_set);
@@ -262,11 +267,21 @@ namespace MagicCardInventory
             /* Loop through and 1) get price from API and 2) update price in the database */
             foreach (DataRow row in cards.Rows)
             {
+                sql.ClearParameters();
+                string strAddress = client.BaseAddress + row.Field<string>("scryfall_id_str");
                 /* Get card data from API call */
-                responseJson = await client.GetStringAsync("https://api.scryfall.com/cards/" + row.Field<string>("scryfall_id_str"));
+                try
+                {
+                    responseJson = await client.GetStringAsync(strAddress);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Unable to get info for card: " + strAddress + ", Error: " + ex.ToString());
+                }
+
                 if (string.IsNullOrWhiteSpace(responseJson))
                 {
-                    throw new Exception("Unable to get card data from API call for card: " + row.Field<string>("scryfall_id_str"));
+                    throw new Exception("Unable to get card data from API call for card: " + strAddress);
                 }
 
                 card = JsonSerializer.Deserialize<Card>(responseJson);
