@@ -7,7 +7,7 @@ namespace MagicCardInventory
     internal class SQL : SqlBase
     {
         #region Constructors
-        internal SQL() { }
+        internal SQL() : base() { }
         internal SQL(string connectionString) : base(connectionString) { }
         #endregion
 
