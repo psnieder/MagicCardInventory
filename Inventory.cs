@@ -92,7 +92,16 @@ namespace MagicCardInventory
             p_name = p_name.Replace(" ", "+");
 
             /* Get card data from API call */
-            string responseJson = await client.GetStringAsync(client.BaseAddress + "named?exact=" + p_name + "&set=" + p_set);
+            string responseJson;
+            try
+            {
+                responseJson = await client.GetStringAsync(client.BaseAddress + "named?exact=" + p_name + "&set=" + p_set);
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Error calling scryfall API. Ensure card name and set is correct. Exception returned: " + e.Message);
+            }
+
             if (string.IsNullOrWhiteSpace(responseJson))
             {
                 throw new Exception("Unable to get card data from API call for card: " + p_name + " , set: " + p_set);
