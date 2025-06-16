@@ -267,7 +267,6 @@ namespace MagicCardInventory
             /* Loop through and 1) get price from API and 2) update price in the database */
             foreach (DataRow row in cards.Rows)
             {
-                sql.ClearParameters();
                 string strAddress = client.BaseAddress + row.Field<string>("scryfall_id_str");
                 /* Get card data from API call */
                 try
