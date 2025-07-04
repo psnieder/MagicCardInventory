@@ -21,13 +21,12 @@ namespace MagicCardInventory
             results.Load(reader);
             return results;
         }
-        internal int GetCardId(string p_cardName, string p_set, bool p_foil)
+        internal int GetCardId(string p_scryfallId, bool p_foil)
         {
             ClearParameters();
             /* Build SQL query */
-            Command.CommandText = "SELECT c.card_id_int FROM tblCardInfo c WHERE c.card_name_str = @p_cardName AND c.set_str = @p_set AND c.foil_bool = @p_foil";
-            Command.Parameters.AddWithValue("@p_cardName", p_cardName);
-            Command.Parameters.AddWithValue("@p_set", p_set);
+            Command.CommandText = "SELECT c.card_id_int FROM tblCardInfo c WHERE c.scryfall_id_str = @p_scryfallId AND c.foil_bool = @p_foil";
+            Command.Parameters.AddWithValue("@p_scryfallId", p_scryfallId);
             Command.Parameters.AddWithValue("@p_foil", p_foil);
 
             /* Execute query */
@@ -41,7 +40,7 @@ namespace MagicCardInventory
 
             if (results.Rows.Count > 1)
             {
-                throw new Exception("More than 1 value returned for card name: " + p_cardName + " , set: " + p_set + ", foil: " + p_foil);
+                throw new Exception("More than 1 value returned for scryfall ID: " + p_scryfallId + ", foil: " + p_foil);
             }
             else
             {

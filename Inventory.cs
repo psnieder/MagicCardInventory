@@ -22,11 +22,14 @@ namespace MagicCardInventory
         public static async Task Main(string[] args)
         {
             short count = 1;
-            if (args.Length > 4 && !string.IsNullOrWhiteSpace(args[4]) && !short.TryParse(args[4], out count)) 
+            if (args.Length > 3 && !string.IsNullOrWhiteSpace(args[3]) && !short.TryParse(args[3], out count)) 
             {
                 Console.WriteLine("Invalid value for count.");
                 return;
             }
+
+            string foil = string.Empty;
+            if (args.Length > 2) foil = args[2];   
 
             client.BaseAddress = new Uri("https://api.scryfall.com/cards/");
             client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "MagicCardInventory") ;
@@ -39,7 +42,23 @@ namespace MagicCardInventory
             switch(args[0].ToLower())
             {
                 case "add":
-                    await InventoryCard(args[1], args[2], args[3], count);
+                    if (args[1].Contains(','))
+                    {
+                        if (args.Length > 2) throw new Exception("Bulk adding only available for single non-foil cards.");
+
+                        string[] cardsToInventory = args[1].Split(',');
+                        foreach (string card in cardsToInventory)
+                        {
+                            await InventoryCard(card, string.Empty, 1);
+
+                            //Wait 100 milliseconds per API rate limit
+                            await Task.Delay(100);
+                        }
+                    }
+                    else
+                    {
+                        await InventoryCard(args[1], foil, count);                      
+                    }
                     break;
                 case "updateprices":
                     await UpdatePrices();               
@@ -59,12 +78,11 @@ namespace MagicCardInventory
         /// <summary>
         /// Adds a card to the inventory
         /// </summary>
-        /// <param name="p_name">Name of the card</param>
-        /// <param name="p_set">Set of the card</param>
-        /// <param name="p_foil_str">True if the card is a foil</param>
+        /// <param name="p_scryfallId_str">Scryfall ID of the card</param>
+        /// <param name="p_foil_str">If the card is a foil</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private static async Task InventoryCard(string p_name, string p_set, string p_foil_str, short p_count)
+        private static async Task InventoryCard(string p_scryfallId, string p_foil_str, short p_count)
         {
 
             /* Declare variables needed for card inventory */
@@ -89,22 +107,21 @@ namespace MagicCardInventory
             bool hybrid = false;
             bool foil = p_foil_str.ToLower() == "yes";
             if (foil) print_foil_str = " - FOIL";
-            p_name = p_name.Replace(" ", "+");
 
             /* Get card data from API call */
             string responseJson;
             try
             {
-                responseJson = await client.GetStringAsync(client.BaseAddress + "named?exact=" + p_name + "&set=" + p_set);
+                responseJson = await client.GetStringAsync(client.BaseAddress + p_scryfallId);
             }
             catch (Exception e)
             {
-                throw new Exception("Error calling scryfall API. Ensure card name and set is correct. Exception returned: " + e.Message);
+                throw new Exception("Error calling scryfall API. Ensure scryfall ID is correct. Exception returned: " + e.Message);
             }
 
             if (string.IsNullOrWhiteSpace(responseJson))
             {
-                throw new Exception("Unable to get card data from API call for card: " + p_name + " , set: " + p_set);
+                throw new Exception("Unable to get card data from API call for card: " + p_scryfallId);
             }
 
             Card? card = JsonSerializer.Deserialize<Card>(responseJson);
@@ -174,7 +191,7 @@ namespace MagicCardInventory
             }
 
             /* Check if we already have this card inventoried and just need to increase count (and update price because why not) */
-            if (CheckExists(cardName, setName, foil, out int cardId))
+            if (CheckExists(scryfallId, foil, out int cardId))
             {
                 //Update count on existing entry in database
                 if (sql.UpdateCardCount(cardId, p_count) != 1) throw new Exception("Error updating card count");
@@ -322,14 +339,13 @@ namespace MagicCardInventory
         /// <summary>
         /// Checks if the card already exists in the database
         /// </summary>
-        /// <param name="p_cardName">Name of the card</param>
-        /// <param name="p_set">Set of the card</param>
+        /// <param name="p_scryfallId">Scryfall ID of the card</param>
         /// <param name="p_foil">True if the card is foil</param>
         /// <param name="p_cardId">Card ID of the existing card, or a new card ID if the card does not exist yet</param>
         /// <returns>True if the card exists, false otherwise</returns>
-        private static bool CheckExists(string p_cardName, string p_set, bool p_foil, out int p_cardId)
+        private static bool CheckExists(string p_scryfallId, bool p_foil, out int p_cardId)
         {
-            p_cardId = sql.GetCardId(p_cardName, p_set, p_foil);
+            p_cardId = sql.GetCardId(p_scryfallId, p_foil);
             if (p_cardId == 0)
             {
                 p_cardId = sql.GetNextKey("CARDID");
