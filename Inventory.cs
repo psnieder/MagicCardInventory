@@ -132,8 +132,8 @@ namespace MagicCardInventory
             string? price_str = card.Prices?.Usd;
             if (foil) price_str = card.Prices?.UsdFoil;
 
+            /* Set price if available - will stay as default of 0 if not */
             if (!string.IsNullOrWhiteSpace(price_str)) price = Convert.ToDecimal(price_str);
-            else throw new Exception("No price information returned");
 
             /* Get the card name from the card data */
             if (!string.IsNullOrWhiteSpace(card.Name)) cardName = card.Name.ToUpper();
@@ -321,8 +321,8 @@ namespace MagicCardInventory
                     print_foil_str = " - FOIL";
                 }
 
+                /* Set price if available - will stay as default of 0 if not */
                 if (!string.IsNullOrWhiteSpace(price_str)) price = Convert.ToDecimal(price_str);
-                else throw new Exception("No price information returned");
 
                 /* Update price for the card */
                 if (sql.UpdateCardPrice(row.Field<int>("card_id_int"), price) != 1) throw new Exception("Error updating card price");
