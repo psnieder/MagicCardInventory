@@ -44,12 +44,12 @@ namespace MagicCardInventory
                 case "add":
                     if (args[1].Contains(','))
                     {
-                        if (args.Length > 2) throw new Exception("Bulk adding only available for single non-foil cards.");
+                        if (args.Length > 3) throw new Exception("Bulk adding only available for single cards.");
 
                         string[] cardsToInventory = args[1].Split(',');
                         foreach (string card in cardsToInventory)
                         {
-                            await InventoryCard(card, string.Empty, 1);
+                            await InventoryCard(card, foil, 1);
 
                             //Wait 100 milliseconds per API rate limit
                             await Task.Delay(100);
@@ -130,7 +130,9 @@ namespace MagicCardInventory
 
             /* Get the price from the card data */
             string? price_str = card.Prices?.Usd;
-            if (foil) price_str = card.Prices?.UsdFoil;
+
+            /* Set foil price if we are adding a foil card. If no foil price is available, keep regular price */
+            if (foil && !string.IsNullOrWhiteSpace(card.Prices?.UsdFoil)) price_str = card.Prices?.UsdFoil;
 
             /* Set price if available - will stay as default of 0 if not */
             if (!string.IsNullOrWhiteSpace(price_str)) price = Convert.ToDecimal(price_str);
@@ -315,9 +317,11 @@ namespace MagicCardInventory
 
                 /* Get the price from the card data */
                 string? price_str = card.Prices?.Usd;
+
+                /* Set foil price if we are updating a foil card. If no foil price is available, keep regular price */
                 if (row.Field<bool>("foil_bool"))
                 {
-                    price_str = card.Prices?.UsdFoil;
+                    if (!string.IsNullOrWhiteSpace(card.Prices?.UsdFoil)) price_str = card.Prices?.UsdFoil;
                     print_foil_str = " - FOIL";
                 }
 
