@@ -151,10 +151,10 @@ namespace MagicCardInventory
             {
                 foreach (CardFace cf in card.CardFaces)
                 {
-                    if (!string.IsNullOrWhiteSpace(cf.TypeLine)) type += cf.TypeLine.ToUpper() + ",";
+                    if (!string.IsNullOrWhiteSpace(cf.TypeLine)) type += cf.TypeLine.ToUpper() + " // ";
                 }
 
-                type = type.TrimEnd(',');
+                type = type.TrimEnd().TrimEnd('/').TrimEnd();
                 if (string.IsNullOrWhiteSpace(type)) throw new Exception("No type returned");
             }
             else throw new Exception("No type returned");
