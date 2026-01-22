@@ -147,6 +147,16 @@ namespace MagicCardInventory
 
             /* Get the type from the card data */
             if (!string.IsNullOrWhiteSpace(card.TypeLine)) type = card.TypeLine.ToUpper();
+            else if (!string.IsNullOrWhiteSpace(card?.Layout) && multiLayouts.IndexOf(card.Layout.ToLower()) > -1 && card.CardFaces is not null)
+            {
+                foreach (CardFace cf in card.CardFaces)
+                {
+                    if (!string.IsNullOrWhiteSpace(cf.TypeLine)) type += cf.TypeLine.ToUpper() + ",";
+                }
+
+                type = type.TrimEnd(',');
+                if (string.IsNullOrWhiteSpace(type)) throw new Exception("No type returned");
+            }
             else throw new Exception("No type returned");
 
             /* Get the scryfall id from the card data */
