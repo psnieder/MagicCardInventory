@@ -307,7 +307,7 @@ namespace MagicCardInventory
         }
 
         /// <summary>
-        /// 
+        /// Removes a card from the inventory
         /// </summary>
         /// <param name="p_scryfallId">Scryfall ID of the card</param>
         /// <param name="p_foil_str">If the card is a foil or not</param>
