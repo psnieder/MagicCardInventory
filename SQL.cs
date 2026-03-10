@@ -21,6 +21,17 @@ namespace MagicCardInventory
             results.Load(reader);
             return results;
         }
+
+        internal DataTable GetCardInfo(int p_cardId)
+        {
+            ClearParameters();
+            Command.CommandText = "SELECT c.card_name_str, c.set_str, c.foil_bool, cc.count_short FROM tblCardInfo c JOIN tblCardCount cc ON c.card_id_int = cc.card_id_int WHERE c.card_id_int = @p_cardId";
+            Command.Parameters.AddWithValue("@p_cardId", p_cardId);
+            SqlDataReader reader = Command.ExecuteReader();
+            DataTable results = new DataTable();
+            results.Load(reader);
+            return results;
+        }
         internal int GetCardId(string p_scryfallId, bool p_foil)
         {
             ClearParameters();

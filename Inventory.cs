@@ -60,11 +60,27 @@ namespace MagicCardInventory
                         await InventoryCard(args[1], foil, count);                      
                     }
                     break;
+
+                case "remove":
+                    if (args[1].Contains(','))
+                    {
+                        if (args.Length > 3) throw new Exception("Bulk removing only available for single cards.");
+
+                        string[] cardsToRemove = args[1].Split(',');
+                        foreach (string card in cardsToRemove) await RemoveCard(card, foil, 1);
+                    }
+                    else
+                    {
+                        await RemoveCard(args[1], foil, count);
+                    }
+                    break;
+
                 case "updateprices":
                     await UpdatePrices();               
                     break;
+
                 default:
-                    Console.WriteLine("Invalid operation. Valid operations are 'add' and 'updateprices'.");
+                    Console.WriteLine("Invalid operation. Valid operations are add, remove, and updateprices.");
                     break;
             }
 
@@ -80,6 +96,7 @@ namespace MagicCardInventory
         /// </summary>
         /// <param name="p_scryfallId_str">Scryfall ID of the card</param>
         /// <param name="p_foil_str">If the card is a foil</param>
+        /// <param name="p_count">Number of cards to inventory</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         private static async Task InventoryCard(string p_scryfallId, string p_foil_str, short p_count)
@@ -203,7 +220,7 @@ namespace MagicCardInventory
             }
 
             /* Check if we already have this card inventoried and just need to increase count (and update price because why not) */
-            if (CheckExists(scryfallId, foil, out int cardId))
+            if (CheckExists(scryfallId, foil, true, out int cardId))
             {
                 //Update count on existing entry in database
                 if (sql.UpdateCardCount(cardId, p_count) != 1) throw new Exception("Error updating card count");
@@ -290,6 +307,48 @@ namespace MagicCardInventory
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="p_scryfallId">Scryfall ID of the card</param>
+        /// <param name="p_foil_str">If the card is a foil or not</param>
+        /// <param name="p_count">Number of cards to remove</param>
+        private static async Task RemoveCard(string p_scryfallId, string p_foil_str, short p_count)
+        {
+            /* Declare variables needed */
+            bool foil = p_foil_str.ToLower() == "yes";
+            if (foil) print_foil_str = " - FOIL";
+
+            /* Get the card to remove */
+            if (!CheckExists(p_scryfallId, foil, false, out int cardId))
+            {
+                Console.WriteLine((foil ? "Foil card" : "Card") + " not found in inventory with scryfall ID: " + p_scryfallId);
+                return;
+            }
+
+            /* Get card information and validate */
+            DataTable cardTable = sql.GetCardInfo(cardId);
+            if (cardTable.Rows.Count != 1)
+            {
+                Console.WriteLine("Unable to retrieve single card for card ID: " + cardId);
+                return;
+            }
+
+            DataRow card = cardTable.Rows[0];
+
+            if (p_count > card.Field<short>("count_short"))
+            {
+                Console.WriteLine("Cannot remove more cards than are already inventoried for: " + card.Field<string>("card_name_str") + " - " + card.Field<string>("set_str") + print_foil_str + ". Number of cards inventoried: " + card.Field<short>("count_short"));
+                return;
+            }
+
+            /* Remove card */
+            if (sql.UpdateCardCount(cardId, (short)(p_count * -1)) != 1) throw new Exception("Error updating card count");
+
+            /*Print card that we removed */
+            Console.WriteLine("Card removed: " + card.Field<string>("card_name_str") + " - " + card.Field<string>("set_str") + print_foil_str + ", count: " + p_count);
+        }
+
+        /// <summary>
         /// Updates prices of all cards inventoried thus far
         /// </summary>
         private static async Task UpdatePrices()
@@ -355,19 +414,20 @@ namespace MagicCardInventory
         /// </summary>
         /// <param name="p_scryfallId">Scryfall ID of the card</param>
         /// <param name="p_foil">True if the card is foil</param>
-        /// <param name="p_cardId">Card ID of the existing card, or a new card ID if the card does not exist yet</param>
+        /// <param name="p_newCard">True if we want to add a new card</param>
+        /// <param name="p_cardId">Card ID of the existing card, or a new card ID if the card does not exist yet and we are adding a new card</param>
         /// <returns>True if the card exists, false otherwise</returns>
-        private static bool CheckExists(string p_scryfallId, bool p_foil, out int p_cardId)
+        private static bool CheckExists(string p_scryfallId, bool p_foil, bool p_newCard, out int p_cardId)
         {
             p_cardId = sql.GetCardId(p_scryfallId, p_foil);
-            if (p_cardId == 0)
+            if (p_cardId == 0 && p_newCard)
             {
                 p_cardId = sql.GetNextKey("CARDID");
                 if (p_cardId == 0) throw new Exception("Unable to get next key for type CARDID");
                 if (sql.UpdateNextKey("CARDID") != 1) throw new Exception("Error updating next key type CARDID");
                 return false;
             }
-            return true;
+            return p_cardId != 0;
         }
         #endregion
     }
