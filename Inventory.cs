@@ -12,6 +12,7 @@ namespace MagicCardInventory
         private static readonly HttpClient client = new HttpClient();
         private static readonly string multiLayouts = "split,flip,transform,modal_dfc,reversible_card";
         private static string print_foil_str = string.Empty;
+        private static decimal totalPrice = 0M;
         #endregion
 
         #region Main
@@ -59,6 +60,8 @@ namespace MagicCardInventory
                     {
                         await InventoryCard(args[1], foil, count);                      
                     }
+
+                    Console.WriteLine("Total price of cards inventoried: " + totalPrice);
                     break;
 
                 case "remove":
@@ -304,6 +307,7 @@ namespace MagicCardInventory
                 //Print card that we added
                 Console.WriteLine("New card added: " + cardName + " - " + setName + print_foil_str + " - " + price + ", count: " + p_count);
             }
+            totalPrice += (price * p_count);
         }
 
         /// <summary>
